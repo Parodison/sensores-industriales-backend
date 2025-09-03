@@ -1,5 +1,5 @@
 from datetime import date
-from fastapi import APIRouter, Depends, WebSocket
+from fastapi import APIRouter, Depends, WebSocket, Query
 from sqlalchemy import select
 from src.sensores.sensor_handler import SensorHandler
 from conf.authentication import auth
@@ -44,3 +44,12 @@ async def crear_token_microcontrolador(db: AsyncSession = Depends(get_session)):
         return {"token": microcontrolador.token}
     
     return {"token": microcontrolador.token}
+
+@router.get("/obtener-historial-sensor")
+async def obtener_historial_sensor(
+    sensor: str = Query("aire", description="Nombre del sensor"),
+    db: AsyncSession = Depends(get_session)
+):
+    sensor_handler = SensorHandler()
+    datos_sensor = await sensor_handler.obtener_historial_monitoreo(sensor)
+    return datos_sensor

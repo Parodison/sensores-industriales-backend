@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import WebSocket
 from conf.settings import redis_instance
 from conf.authentication import auth
@@ -12,10 +13,8 @@ class WebsocketList(TypedDict):
 
 conexiones_activas: list[WebsocketList] = []
 
+
 class SensorHandler:
-
-    
-
     def __init__(self, websocket: WebSocket = None):
         self.redis = redis_instance
         self.websocket = websocket
@@ -90,7 +89,7 @@ class SensorHandler:
         sensor = datos["sensor"]
         valor = datos["valor"]
 
-        fecha_hora_actual = datetime.now(timezone.utc).isoformat()
+        fecha_hora_actual = datetime.now().isoformat()
 
         datos_a_guardar = {
             "sensor": sensor,
@@ -99,7 +98,22 @@ class SensorHandler:
         }
         
         await self.redis.lpush("sensor_data", json.dumps(datos_a_guardar))
-        print(datos_a_guardar)
+
+    async def obtener_historial_monitoreo(self, sensor: str):
+        datos_sensor_obtenidos: list[dict] = []
+        datos: list[dict] = await self.redis.lrange("sensor_data", 0, -1)
+        for d in datos:
+            dato: dict = json.loads(d)
+            if dato.get("sensor") == sensor:
+                
+
+                datos_sensor_obtenidos.append(dato)
+
+        
+        return {
+            "mensaje": "Datos de sensor obtenidos",
+            "datos": datos_sensor_obtenidos
+        }              
 
         
 

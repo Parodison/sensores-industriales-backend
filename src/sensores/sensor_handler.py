@@ -5,6 +5,10 @@ from conf.authentication import auth
 from typing import TypedDict, Optional
 from datetime import datetime, timezone
 import json
+from src.sensores.models import Monitoreo
+from conf.database import engine
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, select
 
 class WebsocketList(TypedDict):
     usuario_id: Optional[WebSocket]
@@ -12,6 +16,13 @@ class WebsocketList(TypedDict):
     websocket: WebSocket
 
 conexiones_activas: list[WebsocketList] = []
+
+class Datasets(TypedDict):
+    data: list[str]
+
+class LineChartStruct(TypedDict):
+    labels: list[str]
+    datasets: list[Datasets]
 
 
 class SensorHandler:
@@ -89,33 +100,84 @@ class SensorHandler:
         sensor = datos["sensor"]
         valor = datos["valor"]
 
-        fecha_hora_actual = datetime.now().isoformat()
-
-        datos_a_guardar = {
-            "sensor": sensor,
-            "valor": valor,
-            "timestamp": fecha_hora_actual
-        }
+        fecha_hora_actual = datetime.now()
         
-        await self.redis.lpush("sensor_data", json.dumps(datos_a_guardar))
+        registrar_monitoreo = Monitoreo()
+        registrar_monitoreo.sensor = sensor
+        registrar_monitoreo.fecha_lectura = fecha_hora_actual
+        registrar_monitoreo.valor = valor
+        
+        async with AsyncSession(engine) as session:
+            session.add(registrar_monitoreo)
+            await session.commit()
+            await session.refresh(registrar_monitoreo)  
+        print(f"Se ha registrado el valor {registrar_monitoreo.valor} para el sensor {registrar_monitoreo.sensor} con fecha {registrar_monitoreo.fecha_lectura.astimezone().strftime("%d/%m/%Y %H:%M:%S")}")
 
     async def obtener_historial_monitoreo(self, sensor: str):
-        datos_sensor_obtenidos: list[dict] = []
-        datos: list[dict] = await self.redis.lrange("sensor_data", 0, -1)
-        for d in datos:
-            dato: dict = json.loads(d)
-            if dato.get("sensor") == sensor:
-                
-
-                datos_sensor_obtenidos.append(dato)
-
+        line_chart: LineChartStruct = {
+            "labels": [],
+            "datasets": [{
+                "data": []
+            }]
+        }
         
+
+        hoy = datetime.now().date()
+        hora_inicial = datetime.combine(hoy, datetime.min.time())
+        hora_final = datetime.combine(hoy, datetime.max.time())
+        
+        query = (
+            select(Monitoreo)
+            .where(Monitoreo.sensor == sensor)
+            .order_by(Monitoreo.fecha_lectura.desc())
+            .limit(100)
+        )
+
+        query_estadistico = (
+            select(Monitoreo)
+            .where(and_(
+                Monitoreo.fecha_lectura >= hora_inicial,
+                Monitoreo.fecha_lectura <= hora_final
+            ))
+        )
+        
+
+        async with AsyncSession(engine) as session:
+            exec = await session.execute(query)
+            resultados_generales = exec.scalars().all()
+            for resultado in resultados_generales:
+                
+                
+                resultado.fecha_lectura = resultado.fecha_lectura.astimezone()
+
+            result_estadistico = await session.execute(query_estadistico)
+            registros_estadisticos = result_estadistico.scalars().all()
+            
+            hora_leida = 0
+            minuto_leido = 0
+            segundo_leido = 0
+            for registro in registros_estadisticos:
+                horario_lectura = registro.fecha_lectura.astimezone()
+                hora = horario_lectura.hour
+                minuto = horario_lectura.minute
+                segundo = horario_lectura.second
+                
+                
+                if hora_leida != hora:
+                    hora_leida = hora
+                    line_chart["labels"].append(f"{str(int(hora)).zfill(2)}:{str(int(minuto)).zfill(2)}")
+                    line_chart["datasets"][0]["data"].append(registro.valor)
+
+            
+
+            
+            
+
         return {
             "mensaje": "Datos de sensor obtenidos",
-            "datos": datos_sensor_obtenidos
-        }              
-
-        
-
-    
-    
+            "line_chart": line_chart,
+            "datos": resultados_generales,
+            
+        }   
+    async def obtener_historial_estadistico():
+        pass

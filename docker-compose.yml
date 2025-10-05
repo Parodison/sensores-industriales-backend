@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres      # usuario administrador
+      POSTGRES_PASSWORD: postgres  # contraseña del admin
+      POSTGRES_DB: solaris         # base de datos inicial
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

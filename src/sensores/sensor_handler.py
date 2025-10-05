@@ -10,9 +10,10 @@ from src.sensores.models import Monitoreo
 from conf.database import engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select
-import weasyprint
+from playwright.async_api import async_playwright
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
+from conf.utils import imagen_base64
 
 jinja2_environment = Environment(loader=FileSystemLoader("templates"))
 
@@ -117,7 +118,7 @@ class SensorHandler:
             session.add(registrar_monitoreo)
             await session.commit()
             await session.refresh(registrar_monitoreo)  
-        print(f"Se ha registrado el valor {registrar_monitoreo.valor} para el sensor {registrar_monitoreo.sensor} con fecha {registrar_monitoreo.fecha_lectura.astimezone().strftime("%d/%m/%Y %H:%M:%S")}")
+        print(f"Se ha registrado el valor {registrar_monitoreo.valor} para el sensor {registrar_monitoreo.sensor} con fecha {registrar_monitoreo.fecha_lectura.astimezone().strftime('%d/%m/%Y %H:%M:%S')}")
 
     async def obtener_historial_monitoreo(self, sensor: str):
         line_chart: LineChartStruct = {
@@ -211,17 +212,21 @@ class SensorHandler:
 
         context = {
             "reportes": datos_reporte ,
-            "eik_logo": (directorio_template / "eik-logo.png").resolve().as_uri(),
-            "ctn_logo": (directorio_template / "ctn-logo.png").resolve().as_uri(),
-            "solaris_logo": (directorio_template / "solaris-logo.png").resolve().as_uri()
+            "eik_logo": imagen_base64(directorio_template / "eik-logo.png"),
+            "ctn_logo": imagen_base64(directorio_template / "ctn-logo.png"),
+            "solaris_logo": imagen_base64(directorio_template / "solaris-logo.png")
         }
+
         print(context)
         
-        def generar_pdf():
-            pdf_io = BytesIO()
-            weasyprint.HTML(string=template_reporte.render()).write_pdf(pdf_io)
-            pdf_io.seek(0)
-            return pdf_io
-        pdf_generado = await asyncio.to_thread(generar_pdf)
-        return pdf_generado
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=True, args=['--allow-file-access-from-files'])
+            page = await browser.new_page()
+            await page.set_content(template_reporte.render(context))
+            await page.wait_for_load_state("networkidle")
+            pdf_bytes = await page.pdf(format="A4", print_background=True)
+            await browser.close()
+            
+            pdf_io = BytesIO(pdf_bytes)
+        return pdf_io
 

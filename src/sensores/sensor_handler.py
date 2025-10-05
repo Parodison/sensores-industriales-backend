@@ -1,4 +1,5 @@
 import asyncio
+from io import BytesIO
 from fastapi import WebSocket
 from conf.settings import redis_instance
 from conf.authentication import auth
@@ -9,6 +10,11 @@ from src.sensores.models import Monitoreo
 from conf.database import engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select
+import weasyprint
+from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
+
+jinja2_environment = Environment(loader=FileSystemLoader("templates"))
 
 class WebsocketList(TypedDict):
     usuario_id: Optional[WebSocket]
@@ -187,5 +193,35 @@ class SensorHandler:
             "datos": resultados_generales,
             
         }   
-    async def obtener_historial_estadistico():
-        pass
+    
+    async def obtener_reporte(self, session: AsyncSession):
+        template_reporte = jinja2_environment.get_template("reporte.html")
+        directorio_template = Path().parent.parent.resolve() / "templates"
+        
+        query = (
+            select(Monitoreo)
+            .limit(100)
+            .order_by(Monitoreo.fecha_lectura.asc())
+        )
+
+        result = await session.execute(query)
+        datos_reporte = result.scalars().all()
+        for reporte in datos_reporte:
+            reporte.fecha_lectura = reporte.fecha_lectura.astimezone().strftime("%H:%M")
+
+        context = {
+            "reportes": datos_reporte ,
+            "eik_logo": (directorio_template / "eik-logo.png").resolve().as_uri(),
+            "ctn_logo": (directorio_template / "ctn-logo.png").resolve().as_uri(),
+            "solaris_logo": (directorio_template / "solaris-logo.png").resolve().as_uri()
+        }
+        print(context)
+        
+        def generar_pdf():
+            pdf_io = BytesIO()
+            weasyprint.HTML(string=template_reporte.render()).write_pdf(pdf_io)
+            pdf_io.seek(0)
+            return pdf_io
+        pdf_generado = await asyncio.to_thread(generar_pdf)
+        return pdf_generado
+

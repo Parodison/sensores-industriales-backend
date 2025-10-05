@@ -1,5 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Depends, WebSocket, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from src.sensores.sensor_handler import SensorHandler
 from conf.authentication import auth
@@ -53,3 +54,14 @@ async def obtener_historial_sensor(
     sensor_handler = SensorHandler()
     datos_sensor = await sensor_handler.obtener_historial_monitoreo(sensor)
     return datos_sensor
+
+@router.get("/obtener-reporte")
+async def obtener_reporte(db: AsyncSession = Depends(get_session)):
+    sensor_handler = SensorHandler()
+    pdf = await sensor_handler.obtener_reporte(db)
+
+    return StreamingResponse(
+        pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline; filename=reporte.pdf"}
+    )

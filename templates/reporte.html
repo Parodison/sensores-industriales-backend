@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/bauhaus-93" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/ocr-a-std" rel="stylesheet">
+                
+
+    <title>Document</title>
+    <style>
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0 auto;
+            display: flex;
+            max-width: 80%;
+            flex-direction: column;
+            max-width: 750px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid black;
+        }
+
+        img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .logo-eik-solaris {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            h1 {
+                padding-top: 15px;
+                margin: 0;
+            }
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: auto;
+            width: 100%;
+            margin: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        th {
+            background-color: gray;
+            color: white;
+            padding: 10px;
+            font-size: 15px;
+        }
+
+        td {
+            text-align: center;
+            padding: 5px;
+            color: #5d5d5d;
+            font-size: 15px;
+            padding: 10px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        footer {
+            text-align: center;
+            background-color: rgb(243, 243, 243);
+            color: #939393;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <img src="Ctn_new_logo-removebg-preview.png" alt="Colegio Técnico Nacional">
+        <h1 style="font-size: 20px;">
+            Proyecto
+            <span style="font-family: 'Bauhaus 93'; font-size: 30px;">
+                SOLARIS
+            </span>
+            <br>Dispositivo <span style="font-family: 'OCR A Std';">DATA-SENSER</span>
+        </h1>
+        <div class="logo-eik-solaris">
+            <img src="eika.png" alt="Electrónica">
+            <img src="Logo.png" alt="">
+        </div>
+    </header>
+    <main>
+        <h1>Historial de lectura de sensores</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Sensor</th>
+                    <th>Valor leído</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>19:32:02</td>
+                    <td>Aire (MQ135)</td>
+                    <td>350 ppm</td>
+                </tr>
+                <tr>
+                    <td>19:32:02</td>
+                    <td>Aire (MQ135)</td>
+                    <td>350 ppm</td>
+                </tr>
+                <tr>
+                    <td>19:32:02</td>
+                    <td>Aire (MQ135)</td>
+                    <td>350 ppm</td>
+                </tr>
+                <tr>
+                    <td>19:32:02</td>
+                    <td>Aire (MQ135)</td>
+                    <td>350 ppm</td>
+                </tr>
+                <tr>
+                    <td>19:32:02</td>
+                    <td>Aire (MQ135)</td>
+                    <td>350 ppm</td>
+                </tr>
+            </tbody>
+
+        </table>
+        
+    </main>
+    <footer>
+        <p>
+            <i>
+                Colegio Técnico Nacional de Asunción
+                <br>Especialidad Electrónica
+                <br>Curso: 2do 
+                <br>Sección: 1ra
+                <br>2025
+            </i>
+        </p>
+    </footer>
+</body>
+
+</html>

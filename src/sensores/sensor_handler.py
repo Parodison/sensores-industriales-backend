@@ -152,6 +152,14 @@ class SensorHandler:
 
             result_estadistico = await session.execute(query_estadistico)
             registros_estadisticos = result_estadistico.scalars().all()
+            if not registros_estadisticos:
+                query_estadistico = (
+                    select(Monitoreo)
+                    .order_by(Monitoreo.fecha_lectura.asc())
+                    
+                )
+                result_estadistico = await session.execute(query_estadistico)
+                registros_estadisticos = result_estadistico.scalars().all()
             
             hora_leida = 0
             minuto_leido = 0

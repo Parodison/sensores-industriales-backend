@@ -1,6 +1,6 @@
 import asyncio
 from io import BytesIO
-from fastapi import WebSocket
+from fastapi import Request, WebSocket
 from conf.settings import redis_instance
 from conf.authentication import auth
 from typing import TypedDict, Optional
@@ -14,6 +14,7 @@ from playwright.async_api import async_playwright
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from conf.utils import imagen_base64
+import qrcode
 
 jinja2_environment = Environment(loader=FileSystemLoader("templates"))
 
@@ -202,13 +203,25 @@ class SensorHandler:
         query = (
             select(Monitoreo)
             .limit(100)
-            .order_by(Monitoreo.fecha_lectura.asc())
+            .order_by(Monitoreo.fecha_lectura.desc())
         )
 
         result = await session.execute(query)
         datos_reporte = result.scalars().all()
         for reporte in datos_reporte:
-            reporte.fecha_lectura = reporte.fecha_lectura.astimezone().strftime("%H:%M")
+            reporte.fecha_lectura = reporte.fecha_lectura.astimezone().strftime("%H:%M:%S")
+            if reporte.sensor == "aire":
+                reporte.sensor = f"{reporte.sensor.capitalize()} (MQ135)"
+                reporte.valor = f"{reporte.valor} ppm"
+            elif reporte.sensor == "polvo":
+                reporte.sensor = f"{reporte.sensor.capitalize()} (DSM501B)"
+                reporte.valor = f"{reporte.valor} µg/m³"
+            elif reporte.sensor == "temperatura":
+                reporte.sensor = f"{reporte.sensor.capitalize()} (DHT11)"
+                reporte.valor = f"{reporte.valor} C°"
+            elif reporte.sensor == "humedad":
+                reporte.sensor = f"{reporte.sensor.capitalize()} (DHT11)"
+                reporte.valor = f"{reporte.valor} %"
 
         context = {
             "reportes": datos_reporte ,
@@ -216,11 +229,10 @@ class SensorHandler:
             "ctn_logo": imagen_base64(directorio_template / "ctn-logo.png"),
             "solaris_logo": imagen_base64(directorio_template / "solaris-logo.png")
         }
-
-        print(context)
+    
         
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=True, args=['--allow-file-access-from-files'])
+            browser = await playwright.chromium.launch(headless=True)
             page = await browser.new_page()
             await page.set_content(template_reporte.render(context))
             await page.wait_for_load_state("networkidle")
@@ -229,4 +241,13 @@ class SensorHandler:
             
             pdf_io = BytesIO(pdf_bytes)
         return pdf_io
+    
+    async def generar_qr(self, request: Request):
+        url = request.base_url
+
+        qr = qrcode.make(f"{url}api/sensores/obtener-reporte")
+        qr_bytes = BytesIO()
+        qr.save(qr_bytes, format="PNG")
+        qr_bytes.seek(0)
+        return qr_bytes
 

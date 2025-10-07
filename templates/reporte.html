@@ -126,31 +126,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>19:32:02</td>
-                    <td>Aire (MQ135)</td>
-                    <td>350 ppm</td>
-                </tr>
-                <tr>
-                    <td>19:32:02</td>
-                    <td>Aire (MQ135)</td>
-                    <td>350 ppm</td>
-                </tr>
-                <tr>
-                    <td>19:32:02</td>
-                    <td>Aire (MQ135)</td>
-                    <td>350 ppm</td>
-                </tr>
-                <tr>
-                    <td>19:32:02</td>
-                    <td>Aire (MQ135)</td>
-                    <td>350 ppm</td>
-                </tr>
-                <tr>
-                    <td>19:32:02</td>
-                    <td>Aire (MQ135)</td>
-                    <td>350 ppm</td>
-                </tr>
+                {% for reporte in reportes %}
+                    <tr>
+                        <td>{{ reporte.fecha_lectura }}</td>
+                        <td>{{ reporte.sensor }}</td>
+                        <td>{{ reporte.valor }}</td>
+                    </tr>
+                {% endfor %}
             </tbody>
 
         </table>
